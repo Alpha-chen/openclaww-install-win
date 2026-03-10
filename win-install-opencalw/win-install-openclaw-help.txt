@@ -1,0 +1,236 @@
+下面给你一套 **Windows → WSL2 → Ubuntu → Node → OpenClaw → 启动脚本** 的完整自动化方案。
+思路是用 **PowerShell 脚本 orchestrate + WSL 内 bash 脚本执行 Linux 环境安装**。这样稳定且可重复执行。
+
+涉及软件：
+
+* Windows Subsystem for Linux
+* Ubuntu
+* Node.js
+* OpenClaw
+
+---
+
+# 一、脚本结构（推荐）
+
+建议放在一个目录：
+
+```
+openclaw-install/
+│
+├── install-wsl.ps1
+├── setup-openclaw.ps1
+├── start-openclaw.ps1
+└── linux-install.sh
+```
+
+职责：
+
+| 脚本                 | 作用                           |
+| ------------------ | ---------------------------- |
+| install-wsl.ps1    | 安装 WSL + Ubuntu              |
+| setup-openclaw.ps1 | 进入 Ubuntu 安装 Node + OpenClaw |
+| linux-install.sh   | Linux 环境安装脚本                 |
+| start-openclaw.ps1 | 以后快速启动 agent                 |
+
+---
+
+# 二、install-wsl.ps1
+
+**安装 WSL + Ubuntu**
+
+```powershell
+Write-Host "Installing WSL2 and Ubuntu..."
+
+wsl --install -d Ubuntu
+
+Write-Host "Waiting for installation..."
+Start-Sleep -Seconds 20
+
+Write-Host "Setting default WSL version..."
+wsl --set-default-version 2
+
+Write-Host "WSL installation complete."
+Write-Host "Please open Ubuntu once to create user account."
+```
+
+执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File install-wsl.ps1
+```
+
+第一次会让你：
+
+```
+Create UNIX username
+Create password
+```
+
+---
+
+# 三、linux-install.sh
+
+这是 **Ubuntu 内执行脚本**。
+
+```bash
+#!/bin/bash
+
+echo "Updating system..."
+sudo apt update && sudo apt upgrade -y
+
+echo "Installing dependencies..."
+sudo apt install -y curl git build-essential
+
+echo "Installing Node.js 20..."
+
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+echo "Checking versions..."
+node -v
+npm -v
+
+echo "Installing OpenClaw..."
+
+sudo npm install -g openclaw
+
+echo "Initializing OpenClaw..."
+
+openclaw init
+
+echo "Installation complete!"
+```
+
+保存后需要：
+
+```bash
+chmod +x linux-install.sh
+```
+
+---
+
+# 四、setup-openclaw.ps1
+
+**PowerShell 调用 WSL 执行 Linux 安装**
+
+```powershell
+Write-Host "Copying install script into WSL..."
+
+wsl mkdir -p ~/openclaw-install
+
+wsl bash -c "cat > ~/openclaw-install/linux-install.sh" < linux-install.sh
+
+Write-Host "Running installation inside Ubuntu..."
+
+wsl bash ~/openclaw-install/linux-install.sh
+
+Write-Host "OpenClaw installation finished."
+```
+
+执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup-openclaw.ps1
+```
+
+这个脚本会自动：
+
+1. 进入 Ubuntu
+2. 安装 Node
+3. 安装 npm
+4. 安装 OpenClaw
+5. 初始化 agent
+
+---
+
+# 五、start-openclaw.ps1
+
+以后 **Windows 直接启动 agent**：
+
+```powershell
+Write-Host "Starting OpenClaw in WSL..."
+
+wsl bash -c "cd ~ && openclaw start"
+```
+
+执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File start-openclaw.ps1
+```
+
+---
+
+# 六、测试 Agent
+
+进入：
+
+```powershell
+wsl
+```
+
+然后：
+
+```bash
+openclaw chat
+```
+
+如果能聊天说明成功。
+
+---
+
+# 七、最终使用流程
+
+只需执行三步：
+
+### 1 安装 WSL
+
+```
+install-wsl.ps1
+```
+
+---
+
+### 2 安装 OpenClaw
+
+```
+setup-openclaw.ps1
+```
+
+---
+
+### 3 启动 Agent
+
+```
+start-openclaw.ps1
+```
+
+---
+
+# 八、进阶（推荐）
+
+后面你可能还会加：
+
+* Ollama 本地模型
+* Telegram bot
+* Feishu bot
+
+我可以给你一套 **完整自动化版本（企业级脚本）**：
+
+一个脚本自动完成：
+
+```
+Windows
+ └─ WSL
+     └─ Ubuntu
+         ├─ Node
+         ├─ OpenClaw
+         ├─ Ollama
+         └─ Llama3
+```
+
+甚至可以做到：
+
+**双击 PowerShell → 10分钟生成 AI Agent 环境。**
+
+如果需要，我可以帮你写 **完整版 install.ps1（约200行，完全自动化）**。
