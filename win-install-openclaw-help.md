@@ -207,7 +207,73 @@ start-openclaw.ps1
 
 ---
 
-# 八、进阶（推荐）
+# 八、故障排除：提示「没有 vm」
+
+运行 OpenClaw 或执行 `start-openclaw.ps1` / `wsl` 时出现 **「没有 vm」** 或类似“需要虚拟机/虚拟机平台”的提示，说明 **WSL 依赖的 Windows 虚拟机组件未启用**，或 **WSL 尚未安装**。
+
+## 原因简述
+
+- OpenClaw 在 Windows 上通过 **WSL2（Ubuntu）** 运行，WSL2 依赖 Windows 的「虚拟机平台」。
+- 若未启用该组件或未安装 WSL，就会报“没有 vm”或无法启动 WSL。
+
+## 解决步骤
+
+### 1. 用脚本一键修复（推荐）
+
+在 **以管理员身份打开的 PowerShell** 中执行：
+
+```powershell
+cd "d:\XPG\openclaw\win-install-openclaw"
+powershell -ExecutionPolicy Bypass -File fix-no-vm.ps1
+```
+
+脚本会：启用「虚拟机平台」和「适用于 Linux 的 Windows 子系统」→ 安装/更新 WSL → 提示重启。**重启完成后**再执行下面的步骤 2。
+
+### 2. 手动启用（若不用脚本）
+
+在 **以管理员身份打开的 PowerShell** 中依次执行：
+
+```powershell
+# 启用「虚拟机平台」（WSL2 必需）
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+
+# 启用「适用于 Linux 的 Windows 子系统」
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+```
+
+执行后 **必须重启电脑**。重启后再执行：
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+首次会要求创建 Ubuntu 用户名和密码。
+
+### 3. 确认 WSL 正常
+
+重启并安装好 Ubuntu 后，在 PowerShell 中执行：
+
+```powershell
+wsl -l -v
+```
+
+应能看到 `Ubuntu` 且版本为 `2`。然后：
+
+```powershell
+wsl bash -c "echo OK"
+```
+
+若输出 `OK`，说明 WSL 已就绪，可以按文档执行 `setup-openclaw.ps1` 或 `start-openclaw.ps1`。
+
+### 4. 仍不行的情形
+
+- **BIOS 虚拟化**：进 BIOS 确认已开启 CPU 虚拟化（Intel VT-x 或 AMD-V）。
+- **Windows 版本**：需 Windows 10 版本 19041 及以上或 Windows 11。
+- **家庭版**：若提示与 Hyper-V 相关，可先尝试只启用上面两个组件并重启，多数情况下足够 WSL2 使用。
+
+---
+
+# 九、进阶（推荐）
 
 后面你可能还会加：
 
