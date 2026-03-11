@@ -1,4 +1,4 @@
-下面给你一套 **Windows → WSL2 → Ubuntu → Node → OpenClaw → 启动脚本** 的完整自动化方案。
+ **Windows → WSL2 → Ubuntu → Node → OpenClaw → 启动脚本** 的完整自动化方案。
 思路是用 **PowerShell 脚本 orchestrate + WSL 内 bash 脚本执行 Linux 环境安装**。这样稳定且可重复执行。
 
 涉及软件：
@@ -233,4 +233,4 @@ Windows
 
 **双击 PowerShell → 10分钟生成 AI Agent 环境。**
 
-如果需要，我可以帮你写 **完整版 install.ps1（约200行，完全自动化）**。
+
